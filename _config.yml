@@ -1,0 +1,16 @@
+# Meta settings
+title: YOUR TITLE HERE
+email: YOUR-EMAIL@HERE.COM
+description: >-
+  WRITE AN AWESOME DESCRIPTION FOR YOUR NEW SITE HERE. YOU CAN EDIT THIS
+  LINE IN _CONFIG.YML. IT WILL APPEAR IN YOUR DOCUMENT HEAD META (FOR
+  GOOGLE SEARCH RESULTS) AND IN YOUR FEED.XML SITE DESCRIPTION.
+url: https://nullJaX.github.io
+baseurl: /jlpw
+github_username: YOUR_GITHUB_USERNAME
+
+# Build settings
+markdown: kramdown
+theme: minima
+plugins:
+  - jekyll-feed
