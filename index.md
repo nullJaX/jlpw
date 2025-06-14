@@ -12,7 +12,6 @@ layout: null
 {% assign all_cases = all_cases | uniq | sort %}
 {% assign all_tags = all_tags | uniq | sort %}
 
-
 **Cases**
 {% for case in all_cases %}
 1. {{ case }}
@@ -23,10 +22,7 @@ layout: null
 {% endfor %}
 
 {% for example in gallery %}
-## {{ example.title }} ({{ example.date }})
-
-![{{ example.title }}]({{ example.image }})
-
+## {{ example.title }} ({{ example.date | date: "%Y/%m/%d %H:%M" }})
 Cases:
 {% for case in example.cases %}
 - {{ case }}
@@ -37,5 +33,6 @@ Tags:
 - {{ tag }}
 {% endfor %}
 
-{{ example.content | markdownify }}
+<img alt="{{ example.title }}" loading="lazy" src="{{ example.image }}"/>
+<iframe width="300" height="200" src="{{ example.url }}" title="{{ example.title }}" loading="lazy" seamless></iframe>
 {% endfor %}
