@@ -1,0 +1,151 @@
+<script>{% assign gallery = site.gallery | sort: "title" %}{% assign gallery = gallery | sort: "date" | reverse %}{% assign all_cases = "" | split: "" %}{% assign all_tags = "" | split: "" %}{% for example in gallery %}{% assign all_cases = all_cases | concat: example.cases %}{% assign all_tags = all_tags | concat: example.tags %}{% endfor %}
+const allCases = {{ all_cases | uniq | sort | jsonify }};
+const allTags = {{ all_tags | uniq | sort | jsonify }};
+const data = [{% for example in gallery %}
+  {
+    "title": {{ example.title | jsonify }},
+    "date": {{ example.date | date: "%Y/%m/%d %H:%M" | jsonify }},
+    "image": {{ example.image | jsonify }},
+    "cases": {{ example.cases | uniq | sort | jsonify }},
+    "tags": {{ example.tags | uniq | sort | jsonify }},
+    "content": {{ site.baseurl | append: example.url | jsonify }}
+  }{% unless forloop.last %},{% endunless %}
+{% endfor %}];
+const tagMapping = {};
+const allUrlsSet = new Set();
+data.forEach((item, index) => {
+  item.tags.forEach(tag => {
+    tagMapping[tag] ??= [];
+    tagMapping[tag].push(index);
+  });
+  allUrlsSet.add(item.image);
+});
+let selectedTags = new Set(allTags);
+let selectedCases = new Set(allCases);
+const modal = document.getElementById("modal");
+const modalDialog = document.getElementById("modal_dialog");
+// Selection
+function setWholeSelection(is_on) {
+  modalDialog.querySelectorAll("fieldset input[type='checkbox']").forEach(cb => {
+    cb.checked = is_on;
+    cb.dispatchEvent(new Event("change"));
+  });
+}
+function setSelection(item, selectedItems, is_on) {
+  if (is_on === true) {selectedItems.add(item);}
+  else {selectedItems.delete(item);}
+  render_catalog();
+}
+// Rendering
+function render_catalog() {
+  document.getElementById("tag_selector").textContent = "Tags (" + selectedTags.size + "/" + allTags.length + ")";
+  document.getElementById("case_selector").textContent = "Cases (" + selectedCases.size + "/" + allCases.length + ")";
+  const catalogContent = document.getElementById("catalog");
+  const fragment = document.createDocumentFragment();
+  Object.entries(tagMapping).forEach(([tag, indices]) => {
+    if (selectedTags.has(tag)) {
+      const row = _render_row(tag, indices, selectedCases);
+      fragment.appendChild(row);
+    }
+  });
+  catalogContent.replaceChildren(fragment);
+}
+function _render_row(tag, indices, case_filter) {
+  const rowClone = document.getElementById("tag_row").content.cloneNode(true);
+  const cardList = rowClone.querySelector(".row.scroll");
+  rowClone.querySelector("h6").textContent = tag;
+  indices.forEach(index => {
+    const item = data[index];
+    if (item.cases.filter(x => case_filter.has(x)).length > 0) {
+      cardList.appendChild(_render_card(item));
+    }
+  });
+  return rowClone;
+}
+function _render_card(item) {
+  const cardClone = document.getElementById("card_view").content.cloneNode(true);
+  const image = cardClone.querySelector("img");
+  cardClone.querySelector("h6").textContent = item.title;
+  image.src = item.image;
+  image.alt = item.title;
+  cardClone.querySelector("article").addEventListener("click", () => openModal(_render_preview(item)));
+  return cardClone;
+}
+function _render_preview(item) {
+  const previewClone = document.getElementById("preview").content.cloneNode(true);
+  const image = previewClone.querySelector("img");
+  const modalContent = previewClone.querySelector("div.modal-content");
+  image.src = item.image;
+  image.alt = item.title;
+  previewClone.querySelector("h5").textContent = item.title;
+  previewClone.querySelector("div.italic").textContent = item.date;
+  fetch(item.content)
+    .then(response => response.text())
+    .then(html => modalContent.innerHTML = html)
+    .catch(err => modalContent.textContent = "Error loading content.");
+  return previewClone;
+}
+function _render_selector(title, allItems, selectedItems) {
+  const selectorClone = document.getElementById("selector").content.cloneNode(true);
+  selectorClone.querySelector("legend").textContent = "Select " + title;
+  const fieldSet = selectorClone.querySelector("fieldset");
+  allItems.forEach(item => {
+    const selectionClone = document.getElementById("selection").content.cloneNode(true);
+    selectionClone.querySelector("span").textContent = item;
+    const checkbox = selectionClone.querySelector("input");
+    checkbox.checked = selectedItems.has(item);
+    checkbox.addEventListener("change", () => setSelection(item, selectedItems, checkbox.checked));
+    fieldSet.appendChild(selectionClone);
+  });
+  selectorClone.querySelector("#select-all").addEventListener("click", () => setWholeSelection(true));
+  selectorClone.querySelector("#deselect-all").addEventListener("click", () => setWholeSelection(false));
+  return selectorClone;
+}
+// Modal behavior
+document.getElementById("modal_close").addEventListener("click", () => closeModal());
+function closeModal() {
+  modal.classList.remove("active");
+  modalDialog.classList.remove("active");
+  modalDialog.innerHTML = "";
+}
+function openModal(content) {
+  modalDialog.innerHTML = "";
+  modalDialog.appendChild(content);
+  modalDialog.classList.add("active");
+  modal.classList.add("active");
+}
+document.getElementById("tag_selector").addEventListener("click", () => openModal(_render_selector("Tags", allTags, selectedTags)));
+document.getElementById("case_selector").addEventListener("click", () => openModal(_render_selector("Cases", allCases, selectedCases)));
+// Preloading images for smooth operation
+const preloadedUrls = new Set();
+const preloadedImages = new Set();
+function preloadImage(url) {
+  if (preloadedUrls.has(url)) return Promise.resolve();
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = async () => {
+      try {await img.decode();} catch (e) {}
+      preloadedUrls.add(url);
+      preloadedImages.add(img);
+      resolve();
+    };
+    img.onerror = () => {
+      preloadedUrls.add(url);
+      resolve();
+    };
+    img.src = url;
+  });
+}
+async function preloadAllImages(urlSet) {
+  const promises = [];
+  for (const url of urlSet) {
+    promises.push(preloadImage(url));
+  }
+  await Promise.all(promises);
+}
+// On start
+document.addEventListener("DOMContentLoaded", async () => {
+  await preloadAllImages(allUrlsSet);
+  render_catalog();
+});
+</script>

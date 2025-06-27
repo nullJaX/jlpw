@@ -1,9 +1,9 @@
 ---
 title: TITLE
 date: 2024-06-13 13:37:00 +/-TTTT
-image: path/to/image/file
+image: images/nord-balloons.png
 cases: ["case c", "case d"]
-tags: ["tag 3", "tag 4"]
+tags: ["tag 1", "tag 2","tag 3", "tag 4"]
 ---
 
 # HEADING 8

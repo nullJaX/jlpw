@@ -5,7 +5,8 @@ description: >-
   WRITE AN AWESOME DESCRIPTION FOR YOUR NEW SITE HERE. YOU CAN EDIT THIS
   LINE IN _CONFIG.YML. IT WILL APPEAR IN YOUR DOCUMENT HEAD META (FOR
   GOOGLE SEARCH RESULTS) AND IN YOUR FEED.XML SITE DESCRIPTION.
-url: https://nullJaX.github.io
+url: https://nulljax.github.io
+baseurl: /jlpw
 github_username: YOUR_GITHUB_USERNAME
 
 # Content settings
